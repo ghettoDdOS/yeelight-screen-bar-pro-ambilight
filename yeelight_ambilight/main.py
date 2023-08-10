@@ -3,6 +3,7 @@ import json
 import logging
 import socket
 import sys
+import threading
 import time
 import tkinter
 from contextlib import contextmanager
@@ -140,6 +141,8 @@ class Ambilight:
         refresh_rate=1,
         initial_brightness=100,
     ) -> None:
+        self._running = False
+
         self.screen_controller = screen_controller
         self.lamp_controller = lamp_controller
 
@@ -163,7 +166,7 @@ class Ambilight:
         return self.lamp_controller.send_command(command)
 
     def process(self):
-        while True:
+        while self._running:
             start_time = time.time()
 
             color = self.get_color()
@@ -175,8 +178,16 @@ class Ambilight:
             if delta < self.refresh_rate:
                 time.sleep(self.refresh_rate - delta)
 
+    def start(self):
+        if not self._running:
+            self._running = True
+            threading.Thread(target=self.process).start()
 
-def set_up_logging(debug: bool):
+    def stop(self):
+        self._running = False
+
+
+def setup_logging(debug: bool):
     handler = logging.StreamHandler(sys.stdout)
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -197,19 +208,21 @@ def main():
 
     args = parser.parse_args()
 
-    set_up_logging(args.debug)
-
-    _log.info("Start Yeelight Ambilight on %s lamp.", args.ip)
+    setup_logging(args.debug)
 
     screen_controller = ScreenController()
     lamp_controller = LampController(args.ip)
     ambilight_controller = Ambilight(screen_controller, lamp_controller)
 
-    try:
-        ambilight_controller.process()
-    except KeyboardInterrupt:
-        _log.info("GoodBye!")
-        exit(1)
+    _log.info("Start Yeelight Ambilight on %s lamp.", args.ip)
+
+    while True:
+        try:
+            ambilight_controller.start()
+        except KeyboardInterrupt:
+            ambilight_controller.stop()
+            _log.info("GoodBye!")
+            exit(1)
 
 
 if __name__ == "__main__":
