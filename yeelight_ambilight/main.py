@@ -2,6 +2,7 @@ import argparse
 import json
 import logging
 import socket
+import sys
 import time
 import tkinter
 from contextlib import contextmanager
@@ -175,6 +176,16 @@ class Ambilight:
                 time.sleep(self.refresh_rate - delta)
 
 
+def set_up_logging(debug: bool):
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    _log.addHandler(handler)
+    _log.setLevel(logging.DEBUG if debug else logging.INFO)
+
+
 def main():
     parser = argparse.ArgumentParser(
         prog="Yeelight Ambilight",
@@ -182,13 +193,23 @@ def main():
         "color from average screen color",
     )
     parser.add_argument("ip")
+    parser.add_argument("-d", "--debug", action="store_true")
+
     args = parser.parse_args()
+
+    set_up_logging(args.debug)
+
+    _log.info("Start Yeelight Ambilight on %s lamp.", args.ip)
 
     screen_controller = ScreenController()
     lamp_controller = LampController(args.ip)
     ambilight_controller = Ambilight(screen_controller, lamp_controller)
 
-    ambilight_controller.process()
+    try:
+        ambilight_controller.process()
+    except KeyboardInterrupt:
+        _log.info("GoodBye!")
+        exit(1)
 
 
 if __name__ == "__main__":
