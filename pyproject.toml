@@ -10,6 +10,8 @@ packages = [{ include = "yeelight_ambilight" }]
 python = "^3.11"
 pillow = "^10.0.0"
 
+[tool.poetry.scripts]
+yeelight-ambilight = "yeelight_ambilight.main:main"
 
 [build-system]
 requires = ["poetry-core"]
