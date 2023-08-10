@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "yeelight-ambilight"
+version = "0.1.0"
+description = ""
+authors = ["ghettoDdOS <pen.egor2002@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "yeelight_ambilight" }]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pillow = "^10.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
